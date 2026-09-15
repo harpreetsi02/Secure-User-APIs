@@ -2,6 +2,7 @@ package com.backend.secureuserapi.controller;
 
 import com.backend.secureuserapi.dto.request.LoginRequest;
 import com.backend.secureuserapi.dto.request.RegisterRequest;
+import com.backend.secureuserapi.dto.response.AuthResponse;
 import com.backend.secureuserapi.dto.response.UserResponse;
 import com.backend.secureuserapi.service.AuthService;
 import jakarta.validation.Valid;
@@ -35,10 +36,10 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<UserResponse> login(
+    public ResponseEntity<AuthResponse> login(
             @Valid @RequestBody LoginRequest request
     ) {
-        UserResponse response =
+        AuthResponse response =
                 authService.login(request);
 
         return ResponseEntity.ok(response);

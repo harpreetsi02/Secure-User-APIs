@@ -2,6 +2,7 @@ package com.backend.secureuserapi.service;
 
 import com.backend.secureuserapi.dto.request.LoginRequest;
 import com.backend.secureuserapi.dto.request.RegisterRequest;
+import com.backend.secureuserapi.dto.response.AuthResponse;
 import com.backend.secureuserapi.dto.response.UserResponse;
 import com.backend.secureuserapi.entity.User;
 import com.backend.secureuserapi.exception.InvalidCredentialException;
@@ -11,17 +12,22 @@ import com.backend.secureuserapi.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Set;
+import java.util.stream.Collectors;
+
 @Service
 public class AuthService {
 
     private final UserRepository  userRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
-    public AuthService(UserRepository userRepository, UserMapper userMapper, PasswordEncoder passwordEncoder) {
+    public AuthService(UserRepository userRepository, UserMapper userMapper, PasswordEncoder passwordEncoder, JwtService jwtService) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
     }
 
     public UserResponse register(RegisterRequest request){
@@ -47,7 +53,7 @@ public class AuthService {
         return userMapper.toResponse(savedUser);
     }
 
-    public UserResponse login(LoginRequest request){
+    public AuthResponse login(LoginRequest request){
 
         User user = userRepository.findByUsername(request.getUsername())
                 .orElseThrow(() ->
@@ -62,6 +68,15 @@ public class AuthService {
             );
         }
 
-        return userMapper.toResponse(user);
+        Set<String> roleNames = user.getRoles()
+                .stream()
+                .map(Enum::name)
+                .collect(Collectors.toSet());
+
+        String token = jwtService.generateToken(user.getUsername(), roleNames);
+
+        UserResponse response = userMapper.toResponse(user);
+
+        return new AuthResponse(token, response);
     }
 }
