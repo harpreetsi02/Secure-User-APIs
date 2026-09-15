@@ -47,7 +47,7 @@ public class UserService {
         userRepository.deleteById(id);
     }
 
-    public void logoutCurrentUser(String username){
+    public void logoutCurrentUser(String username, String accessToken){
 
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() ->
@@ -56,6 +56,6 @@ public class UserService {
                     )
                 );
 
-        authService.logout(user.getId());
+        authService.logout(user.getId(), accessToken);
     }
 }

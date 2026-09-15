@@ -2,6 +2,7 @@ package com.backend.secureuserapi.controller;
 
 import com.backend.secureuserapi.dto.response.UserResponse;
 import com.backend.secureuserapi.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -40,9 +41,13 @@ public class UserController {
 
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(
-            @AuthenticationPrincipal UserDetails userDetails
+            @AuthenticationPrincipal UserDetails userDetails,
+            HttpServletRequest request
     ) {
-        userService.logoutCurrentUser(userDetails.getUsername());
+        String authHeader = request.getHeader("Authorization");
+        String accessToken = authHeader.substring(7);
+
+        userService.logoutCurrentUser(userDetails.getUsername(), accessToken);
 
         return ResponseEntity.noContent().build();
     }

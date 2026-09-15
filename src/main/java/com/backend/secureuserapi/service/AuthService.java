@@ -10,9 +10,11 @@ import com.backend.secureuserapi.exception.InvalidCredentialException;
 import com.backend.secureuserapi.exception.UserAlreadyExistsException;
 import com.backend.secureuserapi.mapper.UserMapper;
 import com.backend.secureuserapi.repository.UserRepository;
+import com.backend.secureuserapi.security.jwt.TokenBlacklistService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -24,19 +26,22 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
+    private final TokenBlacklistService tokenBlacklistService;
 
     public AuthService(
             UserRepository userRepository,
             UserMapper userMapper,
             PasswordEncoder passwordEncoder,
             JwtService jwtService,
-            RefreshTokenService refreshTokenService
+            RefreshTokenService refreshTokenService,
+            TokenBlacklistService tokenBlacklistService
     ) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.refreshTokenService = refreshTokenService;
+        this.tokenBlacklistService = tokenBlacklistService;
     }
 
     public UserResponse register(RegisterRequest request){
@@ -106,7 +111,10 @@ public class AuthService {
         return new AuthResponse(newAccessToken, refreshToken.getToken(), userResponse);
     }
 
-    public void logout(Long userId){
+    public void logout(Long userId, String accessToken){
         refreshTokenService.deleteByUserId(userId);
+
+        Date expiry = jwtService.extractExpiration(accessToken);
+        tokenBlacklistService.blacklistToken(accessToken, expiry.toInstant());
     }
 }
