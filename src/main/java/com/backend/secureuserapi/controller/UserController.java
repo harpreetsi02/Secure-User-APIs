@@ -37,4 +37,13 @@ public class UserController {
 
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        userService.logoutCurrentUser(userDetails.getUsername());
+
+        return ResponseEntity.noContent().build();
+    }
 }

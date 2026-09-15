@@ -4,6 +4,7 @@ import com.backend.secureuserapi.dto.request.LoginRequest;
 import com.backend.secureuserapi.dto.request.RegisterRequest;
 import com.backend.secureuserapi.dto.response.AuthResponse;
 import com.backend.secureuserapi.dto.response.UserResponse;
+import com.backend.secureuserapi.entity.RefreshToken;
 import com.backend.secureuserapi.entity.User;
 import com.backend.secureuserapi.exception.InvalidCredentialException;
 import com.backend.secureuserapi.exception.UserAlreadyExistsException;
@@ -22,12 +23,20 @@ public class AuthService {
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final RefreshTokenService refreshTokenService;
 
-    public AuthService(UserRepository userRepository, UserMapper userMapper, PasswordEncoder passwordEncoder, JwtService jwtService) {
+    public AuthService(
+            UserRepository userRepository,
+            UserMapper userMapper,
+            PasswordEncoder passwordEncoder,
+            JwtService jwtService,
+            RefreshTokenService refreshTokenService
+    ) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.refreshTokenService = refreshTokenService;
     }
 
     public UserResponse register(RegisterRequest request){
@@ -73,10 +82,31 @@ public class AuthService {
                 .map(Enum::name)
                 .collect(Collectors.toSet());
 
-        String token = jwtService.generateToken(user.getUsername(), roleNames);
+        String accessToken = jwtService.generateToken(user.getUsername(), roleNames);
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
 
         UserResponse response = userMapper.toResponse(user);
 
-        return new AuthResponse(token, response);
+        return new AuthResponse(accessToken, refreshToken.getToken(), response);
+    }
+
+    public AuthResponse refreshAccessToken(String refreshTokenStr){
+
+        RefreshToken refreshToken = refreshTokenService.verifyRefreshToken(refreshTokenStr);
+        User user = refreshToken.getUser();
+
+        Set<String> roleNames = user.getRoles()
+                .stream()
+                .map(Enum::name)
+                .collect(Collectors.toSet());
+
+        String newAccessToken = jwtService.generateToken(user.getUsername(), roleNames);
+        UserResponse userResponse = userMapper.toResponse(user);
+
+        return new AuthResponse(newAccessToken, refreshToken.getToken(), userResponse);
+    }
+
+    public void logout(Long userId){
+        refreshTokenService.deleteByUserId(userId);
     }
 }

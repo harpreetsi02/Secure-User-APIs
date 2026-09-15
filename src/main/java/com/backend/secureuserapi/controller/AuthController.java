@@ -1,6 +1,7 @@
 package com.backend.secureuserapi.controller;
 
 import com.backend.secureuserapi.dto.request.LoginRequest;
+import com.backend.secureuserapi.dto.request.RefreshRequest;
 import com.backend.secureuserapi.dto.request.RegisterRequest;
 import com.backend.secureuserapi.dto.response.AuthResponse;
 import com.backend.secureuserapi.dto.response.UserResponse;
@@ -41,6 +42,15 @@ public class AuthController {
     ) {
         AuthResponse response =
                 authService.login(request);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<AuthResponse> refresh(
+            @Valid @RequestBody RefreshRequest request
+    ) {
+        AuthResponse response = authService.refreshAccessToken(request.getRefreshToken());
 
         return ResponseEntity.ok(response);
     }

@@ -12,9 +12,15 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+    private final AuthService authService;
 
-    public UserService(UserRepository userRepository, UserMapper userMapper) {
+    public UserService(
+            UserRepository userRepository,
+            AuthService authService,
+            UserMapper userMapper
+    ) {
         this.userRepository = userRepository;
+        this.authService = authService;
         this.userMapper = userMapper;
     }
 
@@ -39,5 +45,17 @@ public class UserService {
         }
 
         userRepository.deleteById(id);
+    }
+
+    public void logoutCurrentUser(String username){
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() ->
+                        new InvalidCredentialException(
+                                "User not found: " + username
+                    )
+                );
+
+        authService.logout(user.getId());
     }
 }
