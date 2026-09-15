@@ -3,11 +3,10 @@ package com.backend.secureuserapi.controller;
 import com.backend.secureuserapi.dto.response.UserResponse;
 import com.backend.secureuserapi.service.UserService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/users")
@@ -27,5 +26,15 @@ public class UserController {
                 userService.getCurrentUser(userDetails.getUsername());
 
         return ResponseEntity.ok(response);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteUser(
+            @PathVariable Long id
+    ) {
+        userService.deleteUser(id);
+
+        return ResponseEntity.noContent().build();
     }
 }

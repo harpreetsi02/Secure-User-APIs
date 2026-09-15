@@ -29,4 +29,15 @@ public class UserService {
 
         return userMapper.toResponse(user);
     }
+
+    public void deleteUser(Long id){
+
+        if (!userRepository.existsById(id)){
+            throw new InvalidCredentialException(
+                    "User not found with id: " +  id
+            );
+        }
+
+        userRepository.deleteById(id);
+    }
 }
