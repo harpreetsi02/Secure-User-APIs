@@ -97,8 +97,10 @@ public class AuthService {
 
     public AuthResponse refreshAccessToken(String refreshTokenStr){
 
-        RefreshToken refreshToken = refreshTokenService.verifyRefreshToken(refreshTokenStr);
-        User user = refreshToken.getUser();
+        RefreshToken oldRefreshToken = refreshTokenService.verifyRefreshToken(refreshTokenStr);
+        User user = oldRefreshToken.getUser();
+
+        RefreshToken newRefreshToken = refreshTokenService.rotateRefreshToken(oldRefreshToken);
 
         Set<String> roleNames = user.getRoles()
                 .stream()
@@ -108,7 +110,7 @@ public class AuthService {
         String newAccessToken = jwtService.generateToken(user.getUsername(), roleNames);
         UserResponse userResponse = userMapper.toResponse(user);
 
-        return new AuthResponse(newAccessToken, refreshToken.getToken(), userResponse);
+        return new AuthResponse(newAccessToken, newRefreshToken.getToken(), userResponse);
     }
 
     public void logout(Long userId, String accessToken){
